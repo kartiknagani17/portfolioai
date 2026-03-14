@@ -1,0 +1,670 @@
+PortfolioAI
+Product Requirements Document
+Upload resume. Get a portfolio. That's it.
+1. Product Overview
+PortfolioAI is the simplest portfolio builder in the world. A person uploads their resume. Gemini reads it, selects the best design elements from a pre-built component library, and generates a live portfolio website at a unique URL. No form filling, no theme selection, no account creation, no decisions. Just upload and get a portfolio.
+The entire product is two pages and three API routes.
+2. What Already Exists In The Project
+The project already has the following built. Do not touch or rebuild these:
+Landing page at app/page.tsx
+Component library in components/elements/ — all portfolio section components extracted from real portfolio screenshots
+Element library metadata in lib/elementLibrary.ts — the catalogue Gemini reads
+Color palettes, typography pairings, and assembly presets
+Theme registry and component registry
+Build everything in Section 3 on top of what exists. Do not delete or modify anything already there.
+3. What To Build
+3.1 Update The Landing Page
+The landing page already exists. Make one change only: add a resume upload zone directly on the landing page below the hero headline.
+The upload zone:
+Large centered drag-and-drop area
+Text: "Drop your resume here"
+Subline: "PDF or Word — we'll handle the rest"
+A "Browse files" link that opens the file picker
+Accepts .pdf and .docx only
+On file drop or select: immediately start the API sequence and show the loading overlay
+Do not add any other elements. No form, no industry selector, no steps, no login button.
+3.2 Loading Overlay
+When a file is dropped, show a full-screen loading overlay on top of the page. Dark semi-transparent background. Centered content:
+An animated spinning ring or pulsing circle
+Text below it cycling every 2 seconds through these messages in order:
+"Reading your resume..."
+"Understanding your experience..."
+"Selecting the best design..."
+"Building your portfolio..."
+On error: hide the overlay and show an error message "Something went wrong. Please try again." with a retry button.
+3.3 app/p/[subdomain]/page.tsx — Live Portfolio Page
+Fetch the portfolio from Supabase where subdomain matches. If not found return 404.
+Read layout_config from the record. Load each element component by its ID from the component library. Inject the color palette as CSS custom properties on the root wrapper div. Render sections in the order from layout_config.sectionsOrder, passing portfolio_data and layout_config.content as props to each element.
+Set page metadata:
+export async function generateMetadata({ params }) {
+  // fetch portfolio by subdomain
+  return {
+    title: `${fullName} — ${professionalTitle}`,
+    description: rewrittenBio,
+  }
+}
+3.4 middleware.ts
+Single job only: if request host is [subdomain].portfolioai.app (or NEXT_PUBLIC_PORTFOLIO_DOMAIN), rewrite to /p/[subdomain]. Otherwise pass through. No auth, no redirects.
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+export function middleware(request: NextRequest) {
+  const host = request.headers.get("host") || ""
+  const domain = process.env.NEXT_PUBLIC_PORTFOLIO_DOMAIN || "portfolioai.app"
+  const subdomain = host.replace(`.${domain}`, "").replace(domain, "")
+  if (subdomain && subdomain !== host && subdomain !== "www") {
+    return NextResponse.rewrite(
+      new URL(`/p/${subdomain}${request.nextUrl.pathname}`, request.url)
+    )
+  }
+  return NextResponse.next()
+}
+4. Database
+One table in Supabase. Nothing else. No auth, no users table, no plans.
+Run this migration in Supabase SQL editor:
+create table portfolios (
+  id uuid primary key default gen_random_uuid(),
+  subdomain text unique not null,
+  portfolio_data jsonb not null,
+  layout_config jsonb not null,
+  created_at timestamptz default now()
+);
+create index on portfolios (subdomain);
+5. Environment Variables
+Create .env.local with these values:
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+GEMINI_API_KEY=your_gemini_api_key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_PORTFOLIO_DOMAIN=portfolioai.app
+Never commit .env.local to Git. Add it to .gitignore.
+6. Required Packages
+Install if not already present:
+npm install pdf-parse mammoth @google/generative-ai @supabase/supabase-js
+npm install --save-dev @types/pdf-parse
+7. API Routes
+7.1 POST /api/parse-resume
+File: app/api/parse-resume/route.ts
+Accepts multipart/form-data with a "file" field. Extracts text then sends to Gemini. Returns PortfolioData JSON.
+Complete implementation:
+import { GoogleGenerativeAI } from "@google/generative-ai"
+import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const PortfolioDataSchema = z.object({
+  personal: z.object({
+    fullName: z.string(),
+    professionalTitle: z.string(),
+    email: z.string().optional().default(""),
+    phone: z.string().optional().default(""),
+    location: z.string().optional().default(""),
+    bio: z.string().optional().default(""),
+    linkedinUrl: z.string().optional().default(""),
+    githubUrl: z.string().optional().default(""),
+    websiteUrl: z.string().optional().default(""),
+    profilePhotoUrl: z.string().nullable().default(null),
+  }),
+  experience: z.array(z.object({
+    companyName: z.string(),
+    roleTitle: z.string(),
+    startDate: z.string(),
+    endDate: z.string().optional().default(""),
+    isCurrent: z.boolean().default(false),
+    location: z.string().optional().default(""),
+    description: z.string().optional().default(""),
+  })).default([]),
+  projects: z.array(z.object({
+    projectName: z.string(),
+    description: z.string(),
+    techStack: z.array(z.string()).default([]),
+    liveUrl: z.string().optional().default(""),
+    githubUrl: z.string().optional().default(""),
+  })).default([]),
+  skills: z.array(z.object({
+    name: z.string(),
+    category: z.string().optional().default(""),
+  })).default([]),
+  education: z.array(z.object({
+    institution: z.string(),
+    degree: z.string(),
+    fieldOfStudy: z.string().optional().default(""),
+    startYear: z.string().optional().default(""),
+    endYear: z.string().optional().default(""),
+  })).default([]),
+})
+async function extractTextFromFile(file: File): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer())
+  
+  if (file.name.endsWith(".pdf") || file.type === "application/pdf") {
+    const pdfParse = (await import("pdf-parse")).default
+    const result = await pdfParse(buffer)
+    return result.text
+  }
+  
+  if (file.name.endsWith(".docx") || file.type.includes("word")) {
+    const mammoth = await import("mammoth")
+    const result = await mammoth.extractRawText({ buffer })
+    return result.value
+  }
+  
+  throw new Error("Unsupported file type. Please upload a PDF or DOCX file.")
+}
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData()
+    const file = formData.get("file") as File
+    
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 })
+    }
+    
+    const text = await extractTextFromFile(file)
+    
+    if (!text || text.trim().length < 50) {
+      return NextResponse.json({ error: "Could not extract text from file" }, { status: 400 })
+    }
+    
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+    
+    const prompt = `
+Extract all information from this resume and return a JSON object.
+Return JSON only. No markdown. No explanation. No backticks.
+Required structure:
+{
+  "personal": {
+    "fullName": "full name of the person",
+    "professionalTitle": "their job title or role",
+    "email": "email address or empty string",
+    "phone": "phone number or empty string",
+    "location": "city, country or empty string",
+    "bio": "a 2-3 sentence professional summary, use their own words if available",
+    "linkedinUrl": "linkedin url or empty string",
+    "githubUrl": "github url or empty string",
+    "websiteUrl": "personal website url or empty string",
+    "profilePhotoUrl": null
+  },
+  "experience": [
+    {
+      "companyName": "company name",
+      "roleTitle": "job title",
+      "startDate": "month year format e.g. Jan 2022",
+      "endDate": "month year or empty if current",
+      "isCurrent": true or false,
+      "location": "city or remote or empty",
+      "description": "responsibilities and achievements as a paragraph"
+    }
+  ],
+  "projects": [
+    {
+      "projectName": "name of project",
+      "description": "what the project does and what was built",
+      "techStack": ["tech1", "tech2"],
+      "liveUrl": "url or empty string",
+      "githubUrl": "url or empty string"
+    }
+  ],
+  "skills": [
+    { "name": "skill name", "category": "Languages or Frontend or Backend or Design or Tools or Other" }
+  ],
+  "education": [
+    {
+      "institution": "university or school name",
+      "degree": "degree type e.g. Bachelor of Science",
+      "fieldOfStudy": "major or field",
+      "startYear": "year",
+      "endYear": "year or empty if current"
+    }
+  ]
+}
+RESUME TEXT:
+${text}
+`
+    
+    const result = await model.generateContent(prompt)
+    const responseText = result.response.text()
+    
+    const cleaned = responseText
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim()
+    
+    const parsed = JSON.parse(cleaned)
+    const validated = PortfolioDataSchema.parse(parsed)
+    
+    return NextResponse.json(validated)
+    
+  } catch (error: any) {
+    console.error("parse-resume error:", error)
+    return NextResponse.json(
+      { error: error.message || "Failed to parse resume" },
+      { status: 500 }
+    )
+  }
+}
+7.2 POST /api/generate-layout-config
+File: app/api/generate-layout-config/route.ts
+Receives portfolioData. Sends to Gemini with full element library metadata. Gemini selects the best elements and writes content. Returns AssemblyConfig.
+Complete implementation:
+import { GoogleGenerativeAI } from "@google/generative-ai"
+import { NextRequest, NextResponse } from "next/server"
+import { ELEMENT_LIBRARY } from "@/lib/elementLibrary"
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+export async function POST(request: NextRequest) {
+  try {
+    const { portfolioData } = await request.json()
+    
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+    
+    const elementCatalogue = JSON.stringify(
+      ELEMENT_LIBRARY.map(el => ({
+        id: el.id,
+        category: el.category,
+        tags: el.tags,
+      })),
+      null, 2
+    )
+    
+    const prompt = `
+You are a portfolio designer AI.
+Select the best design elements for this person based on their resume data.
+PORTFOLIO DATA:
+${JSON.stringify(portfolioData, null, 2)}
+AVAILABLE ELEMENTS:
+${elementCatalogue}
+STEP 1 — DETECT WHO THIS PERSON IS:
+Detect industry from job titles, companies, skills:
+- Developer: React, Node, Python, AWS, TypeScript, backend, frontend, full-stack, engineer
+- Designer: Figma, Adobe, UI, UX, Sketch, branding, visual design, product design
+- Creative: photography, illustration, animation, 3D, video, art
+- Business: consulting, strategy, management, sales, marketing, finance
+- Academic: research, PhD, publications, university, professor
+Detect seniority:
+- Junior: less than 3 years total experience
+- Mid: 3 to 7 years
+- Senior: more than 7 years
+Detect what data actually exists:
+- Has photo: profilePhotoUrl is not null
+- Has projects: projects array has at least 1 item
+- Has experience: experience array has at least 1 item
+- Has testimonials: never — resumes do not have testimonials
+STEP 2 — SELECT ELEMENTS:
+For each category, pick the single best element ID from the library.
+Rules:
+- Only pick elements whose dataRequirements are satisfied by the actual data
+- If no profilePhotoUrl: never pick a hero requiring a photo, pick text-only hero
+- If projects array is empty: do not include projects section
+- If experience array is empty: do not include experience section
+- Match industry to element industry tags
+- Pick a colorPalette compatible with the detected industry personality
+- Developer personality: minimal, technical, clean palettes
+- Designer personality: visual, warm, creative palettes
+- Creative personality: gallery, artistic, minimal palettes
+- Business personality: professional, structured palettes
+STEP 3 — DECIDE SECTION ORDER:
+- Junior with projects: hero, projects, skills, education, contact
+- Senior developer: hero, experience, skills, projects, contact
+- Designer: hero, projects, about, skills, contact
+- Creative: hero, projects, about, contact
+- Academic: hero, education, experience, skills, contact
+STEP 4 — WRITE CONTENT:
+- heroHeadline: bold confident statement about what they do, NOT their job title, max 10 words
+- heroSubline: one sentence describing their specialty and value
+- rewrittenBio: 3 sentences, confident present tense, no buzzwords
+- availabilityBadge: true if student, recent grad, or clearly seeking work
+- availabilityText: "Open to opportunities" or "Available for freelance" as appropriate
+Return this exact JSON. Nothing else. No markdown. No explanation:
+{
+  "colorPalette": "palette-id-from-library",
+  "typography": "type-id-from-library",
+  "sectionsOrder": ["hero", "experience", "projects", "skills", "contact"],
+  "elements": {
+    "hero": "element-id",
+    "nav": "element-id",
+    "experience": "element-id",
+    "projects": "element-id",
+    "skills": "element-id",
+    "contact": "element-id",
+    "footer": "element-id"
+  },
+  "content": {
+    "heroHeadline": "...",
+    "heroSubline": "...",
+    "rewrittenBio": "...",
+    "availabilityBadge": false,
+    "availabilityText": ""
+  }
+}
+`
+    
+    const result = await model.generateContent(prompt)
+    const responseText = result.response.text()
+    
+    const cleaned = responseText
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim()
+    
+    try {
+      const config = JSON.parse(cleaned)
+      return NextResponse.json(config)
+    } catch {
+      const fallback = getDefaultLayoutConfig(portfolioData)
+      return NextResponse.json(fallback)
+    }
+    
+  } catch (error: any) {
+    console.error("generate-layout-config error:", error)
+    const fallback = getDefaultLayoutConfig(request.body)
+    return NextResponse.json(fallback)
+  }
+}
+function getDefaultLayoutConfig(portfolioData: any) {
+  const hasProjects = portfolioData?.projects?.length > 0
+  const hasExperience = portfolioData?.experience?.length > 0
+  const hasPhoto = !!portfolioData?.personal?.profilePhotoUrl
+  
+  const sections = ["hero"]
+  if (hasExperience) sections.push("experience")
+  if (hasProjects) sections.push("projects")
+  sections.push("skills", "contact")
+  
+  return {
+    colorPalette: "palette-cream-noir",
+    typography: "type-cabinet-inter",
+    sectionsOrder: sections,
+    elements: {
+      hero: hasPhoto ? "hero-statement-avatar-card" : "hero-grey-text-split",
+      nav: "nav-float-minimal-pill",
+      experience: "experience-logo-bullet-cards",
+      projects: "projects-dark-feature-cards",
+      skills: "skills-category-table",
+      contact: "contact-faq-split",
+      footer: "footer-minimal-accent-signature",
+    },
+    content: {
+      heroHeadline: `${portfolioData?.personal?.professionalTitle || "Professional"} ready to make an impact.`,
+      heroSubline: portfolioData?.personal?.bio?.split(".")[0] || "",
+      rewrittenBio: portfolioData?.personal?.bio || "",
+      availabilityBadge: false,
+      availabilityText: "",
+    }
+  }
+}
+7.3 POST /api/portfolios
+File: app/api/portfolios/route.ts
+Receives portfolioData and layoutConfig. Generates subdomain. Inserts into Supabase. Returns id and subdomain.
+Complete implementation:
+import { createClient } from "@supabase/supabase-js"
+import { NextRequest, NextResponse } from "next/server"
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+function generateSubdomain(fullName: string): string {
+  return fullName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 50)
+}
+async function getUniqueSubdomain(base: string): Promise<string> {
+  let subdomain = base
+  let counter = 1
+  
+  while (true) {
+    const { data } = await supabase
+      .from("portfolios")
+      .select("id")
+      .eq("subdomain", subdomain)
+      .single()
+    
+    if (!data) return subdomain
+    
+    counter++
+    subdomain = `${base}-${counter}`
+  }
+}
+export async function POST(request: NextRequest) {
+  try {
+    const { portfolioData, layoutConfig } = await request.json()
+    
+    const baseName = portfolioData?.personal?.fullName || "portfolio"
+    const baseSubdomain = generateSubdomain(baseName)
+    const subdomain = await getUniqueSubdomain(baseSubdomain)
+    
+    const { data, error } = await supabase
+      .from("portfolios")
+      .insert({
+        subdomain,
+        portfolio_data: portfolioData,
+        layout_config: layoutConfig,
+      })
+      .select("id, subdomain")
+      .single()
+    
+    if (error) throw error
+    
+    return NextResponse.json({ id: data.id, subdomain: data.subdomain })
+    
+  } catch (error: any) {
+    console.error("create portfolio error:", error)
+    return NextResponse.json(
+      { error: error.message || "Failed to create portfolio" },
+      { status: 500 }
+    )
+  }
+}
+8. Frontend Upload Logic
+This is the complete sequence that runs when a file is dropped. Add this to the landing page component:
+async function handleFile(file: File) {
+  setLoading(true)
+  setError(null)
+  
+  try {
+    // Step 1: Parse resume
+    const formData = new FormData()
+    formData.append("file", file)
+    
+    const parseRes = await fetch("/api/parse-resume", {
+      method: "POST",
+      body: formData,
+    })
+    
+    if (!parseRes.ok) throw new Error("Failed to parse resume")
+    const portfolioData = await parseRes.json()
+    
+    // Step 2: Generate layout config
+    const layoutRes = await fetch("/api/generate-layout-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ portfolioData }),
+    })
+    
+    if (!layoutRes.ok) throw new Error("Failed to generate layout")
+    const layoutConfig = await layoutRes.json()
+    
+    // Step 3: Create portfolio in Supabase
+    const createRes = await fetch("/api/portfolios", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ portfolioData, layoutConfig }),
+    })
+    
+    if (!createRes.ok) throw new Error("Failed to create portfolio")
+    const { subdomain } = await createRes.json()
+    
+    // Step 4: Redirect to live portfolio
+    window.location.href = `/p/${subdomain}`
+    
+  } catch (err: any) {
+    setError(err.message || "Something went wrong. Please try again.")
+    setLoading(false)
+  }
+}
+9. Element Library
+The element library already exists in lib/elementLibrary.ts from the existing project. The ELEMENT_LIBRARY array contains all element metadata. Gemini reads this array to make selection decisions.
+Each element in the library has this shape:
+{
+  id: "hero-statement-avatar-card",
+  category: "hero",
+  tags: {
+    industries: ["software", "design"],
+    goals: ["get_hired", "showcase_projects"],
+    dataRequirements: ["profile_photo"],
+    personalityFit: ["minimal", "confident"],
+    avoidIf: ["academia"],
+    pairsWellWith: ["palette-cream-noir"],
+    conflictsWith: ["palette-void-gradient"],
+  }
+}
+The component library in components/elements/ contains the actual React components. Each component is loaded by its ID when rendering the portfolio. The renderer maps element IDs to component imports dynamically.
+10. Portfolio Renderer
+File: app/p/[subdomain]/page.tsx
+The renderer loads element components dynamically by ID and renders them in order. Color palette is injected as CSS custom properties. Typography fonts are loaded via next/font or a style tag.
+import { createClient } from "@supabase/supabase-js"
+import { notFound } from "next/navigation"
+import { COMPONENT_REGISTRY } from "@/lib/componentRegistry"
+import { COLOR_PALETTES } from "@/lib/elementLibrary"
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+export default async function PortfolioPage({
+  params,
+}: {
+  params: { subdomain: string }
+}) {
+  const { data: portfolio } = await supabase
+    .from("portfolios")
+    .select("*")
+    .eq("subdomain", params.subdomain)
+    .single()
+  
+  if (!portfolio) notFound()
+  
+  const portfolioData = portfolio.portfolio_data
+  const layoutConfig = portfolio.layout_config
+  const palette = COLOR_PALETTES[layoutConfig.colorPalette] || COLOR_PALETTES["palette-cream-noir"]
+  
+  const cssVars = Object.entries(palette.colors)
+    .map(([key, val]) => `--color-${key}: ${val};`)
+    .join(" ")
+  
+  return (
+    <div style={{ [cssVars as any]: undefined }} className="portfolio-root">
+      <style>{`:root { ${cssVars} }`}</style>
+      {layoutConfig.sectionsOrder.map((section: string) => {
+        const elementId = layoutConfig.elements[section]
+        const Component = COMPONENT_REGISTRY[elementId]
+        if (!Component) return null
+        return (
+          <Component
+            key={section}
+            portfolioData={portfolioData}
+            layoutConfig={layoutConfig}
+          />
+        )
+      })}
+    </div>
+  )
+}
+export async function generateMetadata({
+  params,
+}: {
+  params: { subdomain: string }
+}) {
+  const { data: portfolio } = await supabase
+    .from("portfolios")
+    .select("portfolio_data")
+    .eq("subdomain", params.subdomain)
+    .single()
+  
+  if (!portfolio) return { title: "Portfolio" }
+  
+  const { fullName, professionalTitle } = portfolio.portfolio_data.personal
+  const bio = portfolio.portfolio_data.personal.bio
+  
+  return {
+    title: `${fullName} — ${professionalTitle}`,
+    description: bio,
+  }
+}
+11. Component Registry
+File: lib/componentRegistry.ts
+Maps every element ID to its React component. This is how the renderer loads components dynamically.
+import { HeroCenteredPhotoCircle } from "@/components/elements/hero/HeroCenteredPhotoCircle"
+import { HeroStatementAvatarCard } from "@/components/elements/hero/HeroStatementAvatarCard"
+import { HeroDarkGradientAvatar } from "@/components/elements/hero/HeroDarkGradientAvatar"
+import { HeroEditorialGeometric } from "@/components/elements/hero/HeroEditorialGeometric"
+import { HeroGreyTextSplit } from "@/components/elements/hero/HeroGreyTextSplit"
+import { HeroSplitGreenFrame } from "@/components/elements/hero/HeroSplitGreenFrame"
+// ... import all other elements
+export const COMPONENT_REGISTRY: Record<string, React.ComponentType<any>> = {
+  // Heroes
+  "hero-centered-photo-circle": HeroCenteredPhotoCircle,
+  "hero-statement-avatar-card": HeroStatementAvatarCard,
+  "hero-dark-gradient-avatar": HeroDarkGradientAvatar,
+  "hero-editorial-geometric": HeroEditorialGeometric,
+  "hero-grey-text-split": HeroGreyTextSplit,
+  "hero-split-green-frame": HeroSplitGreenFrame,
+  // Navs
+  "nav-pill-centered": NavPillCentered,
+  "nav-float-minimal-pill": NavFloatMinimalPill,
+  "nav-dark-transparent-script": NavDarkTransparentScript,
+  "nav-white-ultraminimal": NavWhiteUltraMinimal,
+  "nav-grey-bare-minimal": NavGreyBareMinimal,
+  "nav-white-logo-pill-cv": NavWhiteLogoPillCV,
+  // Experience
+  "experience-dashed-center-timeline": ExperienceDashedCenterTimeline,
+  "experience-logo-bullet-cards": ExperienceLogoBulletCards,
+  "experience-logo-paragraph-dark": ExperienceLogoParagraphDark,
+  "experience-numbered-rule-list": ExperienceNumberedRuleList,
+  // Projects
+  "projects-screenshot-carousel": ProjectsScreenshotCarousel,
+  "projects-dark-feature-cards": ProjectsDarkFeatureCards,
+  "projects-thumbnail-two-column": ProjectsThumbnailTwoColumn,
+  "work-six-grid-square": WorkSixGridSquare,
+  "projects-left-text-right-carousel": ProjectsLeftTextRightCarousel,
+  "projects-numbered-rule-list": ProjectsNumberedRuleList,
+  // Skills
+  "skills-category-table": SkillsCategoryTable,
+  "skills-tech-icon-strip": SkillsTechIconStrip,
+  "skills-label-value-pairs": SkillsLabelValuePairs,
+  "skills-split-icon-list": SkillsSplitIconList,
+  "marquee-skills-ticker": MarqueeSkillsTicker,
+  // Contact
+  "contact-cta-email-inline": ContactCTAEmailInline,
+  "contact-faq-split": ContactFAQSplit,
+  "contact-split-form": ContactSplitForm,
+  "contact-info-blocks-form-grid": ContactInfoBlocksFormGrid,
+  "contact-footer-statement": ContactFooterStatement,
+  "contact-dark-minimal-social": ContactDarkMinimalSocial,
+  // Testimonials
+  "testimonials-dark-carousel-cards": TestimonialsDarkCarousel,
+  "testimonials-light-four-grid": TestimonialsLightFourGrid,
+  "testimonials-yellow-border-cards": TestimonialsYellowBorderCards,
+  "testimonials-stars-row": TestimonialsStarsRow,
+  // About
+  "stats-split-photo-card": StatsPhotoCard,
+  "about-illustration-split": AboutIllustrationSplit,
+  "about-grey-split-photo": AboutGreySplitPhoto,
+  "stats-three-divider-bar": StatsThreeDividerBar,
+  // Footer
+  "footer-dark-four-column": FooterDarkFourColumn,
+  "footer-minimal-accent-signature": FooterMinimalAccentSignature,
+}
+12. Navbar
+Logo on the left. One button on the right: "Build My Portfolio" linking to the upload zone on the landing page (#upload or scroll into view). Nothing else. No login, no links, no menu.
+13. Summary
+The product is two things:
+A landing page with a resume upload zone
+A live portfolio at /p/[subdomain]
+Three API routes connect them:
+/api/parse-resume — Gemini reads the resume and returns structured data
+/api/generate-layout-config — Gemini selects elements and writes content
+/api/portfolios — Supabase stores the result and returns a subdomain
+One database table. No auth. No form. No steps. No decisions for the user.
+Upload resume. Get a portfolio.
+That's the entire product.

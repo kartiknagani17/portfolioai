@@ -1,0 +1,21 @@
+export const BUSINESS_BUCKET = {
+  industry: "business",
+  primaryTemplate: "template-the-atlas",
+  fallbackTemplate: "template-meridian",
+  roles: [
+    "product manager",
+    "project manager",
+    "business analyst",
+    "consultant",
+    "marketing manager",
+    "growth manager",
+    "sales manager",
+    "operations manager",
+    "hr manager",
+    "recruiter",
+    "finance manager",
+    "accountant",
+    "lawyer",
+    "attorney",
+  ],
+}

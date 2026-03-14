@@ -1,0 +1,23 @@
+export const DESIGN_BUCKET = {
+  industry: "design",
+  primaryTemplate: "template-depth",
+  fallbackTemplate: "template-2",
+  roles: [
+    "graphic designer",
+    "art director",
+    "brand designer",
+    "visual designer",
+    "ui designer",
+    "ux designer",
+    "product designer",
+    "motion designer",
+    "creative director",
+    "illustrator",
+    "photographer",
+    "animator",
+    "filmmaker",
+    "architect",
+    "interior designer",
+    "fashion designer",
+  ],
+}
