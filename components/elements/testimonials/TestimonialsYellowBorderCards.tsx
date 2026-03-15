@@ -30,7 +30,7 @@ export default function TestimonialsYellowBorderCards({
             <div className="flex items-center gap-3 mt-6">
               <div className="w-12 h-12 rounded-full bg-[var(--color-border)]" />
               <div>
-                <p className="font-semibold" style={{ color: "var(--color-text)" }}>{t.author}</p>
+                <p className="font-semibold" style={{ color: "var(--color-text)" }}>{t.name}</p>
                 <p className="text-sm" style={{ color: "var(--color-textMuted)" }}>{t.company ?? t.role}</p>
               </div>
             </div>

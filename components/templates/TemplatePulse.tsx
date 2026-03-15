@@ -825,11 +825,11 @@ export default function TemplatePulse({ portfolioData: data }: { portfolioData: 
         )}
 
         {/* ══ 08: CERTS ══ */}
-        {certifications?.length > 0 && (
+        {(certifications?.length ?? 0) > 0 && (
           <section id="tp-certs" className="tp-certs-sec">
             <div className="tp-big-title">Certifications</div>
             <div className="tp-certs-grid">
-              {certifications.map((c, i) => (
+              {certifications?.map((c, i) => (
                 <div
                   key={i}
                   id={`tp-cert-${i}`}
@@ -849,14 +849,14 @@ export default function TemplatePulse({ portfolioData: data }: { portfolioData: 
         )}
 
         {/* ══ 09: EXTRAS ══ */}
-        {(languages?.length > 0 || interests?.length > 0) && (
+        {((languages?.length ?? 0) > 0 || (interests?.length ?? 0) > 0) && (
           <section id="tp-extras" className="tp-extras-sec">
             <div className="tp-extras-grid">
-              {languages?.length > 0 && (
+              {(languages?.length ?? 0) > 0 && (
                 <div>
                   <div className="tp-extras-h">Lang<span>uages</span></div>
                   <div className="tp-lang-list" id="tp-lang-list" data-tp-obs>
-                    {languages.map((l, i) => (
+                    {languages?.map((l, i) => (
                       <div key={i}>
                         <div className="tp-lang-top">
                           <div className="tp-lang-name">{l.language}</div>
@@ -876,11 +876,11 @@ export default function TemplatePulse({ portfolioData: data }: { portfolioData: 
                   </div>
                 </div>
               )}
-              {interests?.length > 0 && (
+              {(interests?.length ?? 0) > 0 && (
                 <div>
                   <div className="tp-extras-h">Inter<span>ests</span></div>
                   <div className="tp-int-cloud">
-                    {interests.map((t, i) => (
+                    {interests?.map((t, i) => (
                       <div
                         key={i}
                         id={`tp-int-${i}`}
@@ -905,7 +905,7 @@ export default function TemplatePulse({ portfolioData: data }: { portfolioData: 
               <div className="tp-ws-title">How I <em>operate</em></div>
               {workStyle && <div className="tp-ws-body">{workStyle}</div>}
             </div>
-            {principles.map((p, i) => (
+            {principles.map((p: { heading: string; body: string }, i) => (
               <div
                 key={i}
                 id={`tp-ws-${i}`}

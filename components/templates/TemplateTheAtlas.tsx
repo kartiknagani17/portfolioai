@@ -63,12 +63,12 @@ export default function TemplateTheAtlas({ portfolioData: data }: { portfolioDat
     fullName:         name,
     professionalTitle: data.personal?.professionalTitle ?? (data as any).currentRole ?? "",
     bio:              data.personal?.bio ?? (data as any).bio ?? (data as any).summary ?? "",
-    email:            data.email ?? "",
-    phone:            data.phone ?? "",
-    location:         data.location ?? "",
-    linkedinUrl:      data.linkedin ?? "",
-    githubUrl:        data.github ?? "",
-    websiteUrl:       data.website ?? "",
+    email:            data.personal?.email ?? (data as any).email ?? "",
+    phone:            data.personal?.phone ?? (data as any).phone ?? "",
+    location:         data.personal?.location ?? (data as any).location ?? "",
+    linkedinUrl:      data.personal?.linkedinUrl ?? (data as any).linkedin ?? "",
+    githubUrl:        data.personal?.githubUrl ?? (data as any).github ?? "",
+    websiteUrl:       data.personal?.websiteUrl ?? (data as any).website ?? "",
   }
 
   // ── Derived ───────────────────────────────────────────────────
@@ -690,7 +690,7 @@ export default function TemplateTheAtlas({ portfolioData: data }: { portfolioDat
                   {experience.map((exp, i) => (
                     <div key={i} className={`ta-exp-panel${i === 0 ? " ta-active" : ""}`} data-panel={i}>
                       <div className="ta-exp-ghost">
-                        {exp.companyName.split(" ").map(w => w[0]).join("").slice(0, 4)}
+                        {exp.companyName.split(" ").map((w: string) => w[0]).join("").slice(0, 4)}
                       </div>
                       <div className="ta-exp-role">{exp.roleTitle}</div>
                       <div className="ta-exp-meta-row">

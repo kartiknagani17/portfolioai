@@ -2,17 +2,18 @@ import TemplateTheAtlas from "@/components/templates/TemplateTheAtlas"
 import type { PortfolioData } from "@/types/portfolio"
 
 const data: PortfolioData = {
-  name: "Maya Chen",
-  email: "maya@mayachen.io",
-  phone: "+1 (212) 540-7821",
-  location: "New York, NY",
-  website: "https://mayachen.io",
-  linkedin: "https://linkedin.com/in/mayachen",
-  github: "https://github.com/mayachen",
-  currentRole: "Product Manager",
-  openToWork: true,
-
-  bio: "I turn ambiguous problems into products people love. Five years building at the intersection of data, design, and engineering — most recently leading Notion's collaboration surface.",
+  personal: {
+    fullName: "Maya Chen",
+    professionalTitle: "Product Manager",
+    email: "maya@mayachen.io",
+    phone: "+1 (212) 540-7821",
+    location: "New York, NY",
+    bio: "I turn ambiguous problems into products people love. Five years building at the intersection of data, design, and engineering — most recently leading Notion's collaboration surface.",
+    linkedinUrl: "https://linkedin.com/in/mayachen",
+    githubUrl: "https://github.com/mayachen",
+    websiteUrl: "https://mayachen.io",
+    profilePhotoUrl: null,
+  },
 
   tagline: "Products that feel inevitable — until I build them, nobody knew they were missing.",
 
@@ -24,70 +25,78 @@ const data: PortfolioData = {
 
   experience: [
     {
-      title: "Senior Product Manager",
-      company: "Notion",
+      roleTitle: "Senior Product Manager",
+      companyName: "Notion",
       location: "San Francisco, CA (Remote)",
       startDate: "2020",
-      endDate: "Present",
-      current: true,
+      endDate: "",
+      isCurrent: true,
       description: "Led the collaboration surface — real-time editing, comments, and permissions — used by 20M+ users. Shipped multiplayer presence (live cursors, typing indicators) which drove a 34% increase in team workspace creation. Defined the product strategy for Notion AI's first launch, coordinating a 12-person cross-functional team across 3 time zones.",
     },
     {
-      title: "Product Manager",
-      company: "Brex",
+      roleTitle: "Product Manager",
+      companyName: "Brex",
       location: "San Francisco, CA",
       startDate: "2018",
       endDate: "2020",
+      isCurrent: false,
       description: "Owned the spend management product from 0→1. Designed and shipped the receipt matching engine, reducing finance team reconciliation time by 60%. Grew the business card product from 200 to 4,000 active companies in 14 months.",
     },
     {
-      title: "Product Designer",
-      company: "IDEO",
+      roleTitle: "Product Designer",
+      companyName: "IDEO",
       location: "New York, NY",
       startDate: "2016",
       endDate: "2018",
+      isCurrent: false,
       description: "Designed digital products for clients across healthcare, fintech, and education. Led a 6-month engagement with a top-5 US bank to redesign their SMB onboarding flow, reducing drop-off by 41%.",
     },
   ],
 
   projects: [
     {
-      name: "Notion AI Launch",
+      projectName: "Notion AI Launch",
       description: "Defined product vision, success metrics, and launch strategy for Notion AI. Coordinated ML, product, design, and marketing across 3 continents. 1M+ users in first week.",
-      technologies: ["Product Strategy", "AI/ML", "Growth"],
-      url: "https://notion.so/product/ai",
+      techStack: ["Product Strategy", "AI/ML", "Growth"],
+      liveUrl: "https://notion.so/product/ai",
+      githubUrl: "",
     },
     {
-      name: "Multiplayer Presence",
+      projectName: "Multiplayer Presence",
       description: "Real-time live cursors, typing indicators, and collaborative awareness for Notion. Shipped to 20M users with zero downtime. +34% team workspace creation.",
-      technologies: ["WebSockets", "CRDT", "Product Design"],
+      techStack: ["WebSockets", "CRDT", "Product Design"],
+      liveUrl: "",
+      githubUrl: "",
     },
     {
-      name: "Brex Spend Management",
+      projectName: "Brex Spend Management",
       description: "0→1 spend management product including receipt OCR, policy enforcement, and accounting integrations. Grew from 200 to 4,000 companies in 14 months.",
-      technologies: ["Fintech", "OCR", "0→1"],
-      url: "https://brex.com",
+      techStack: ["Fintech", "OCR", "0→1"],
+      liveUrl: "https://brex.com",
+      githubUrl: "",
     },
     {
-      name: "SMB Onboarding Redesign",
+      projectName: "SMB Onboarding Redesign",
       description: "End-to-end redesign of a top-5 US bank's SMB account opening flow. Reduced drop-off 41% and time-to-open from 22 minutes to 8 minutes.",
-      technologies: ["UX Research", "Prototyping", "Banking"],
+      techStack: ["UX Research", "Prototyping", "Banking"],
+      liveUrl: "",
+      githubUrl: "",
     },
   ],
 
   skills: [
-    { name: "Product Strategy" },
-    { name: "Roadmapping" },
-    { name: "User Research" },
-    { name: "Data Analysis" },
-    { name: "SQL" },
-    { name: "Figma" },
-    { name: "A/B Testing" },
-    { name: "Go-to-Market" },
-    { name: "Stakeholder Management" },
-    { name: "OKRs" },
-    { name: "Python" },
-    { name: "Amplitude" },
+    { name: "Product Strategy", category: "Product" },
+    { name: "Roadmapping", category: "Product" },
+    { name: "User Research", category: "Research" },
+    { name: "Data Analysis", category: "Research" },
+    { name: "SQL", category: "Technical" },
+    { name: "Figma", category: "Design" },
+    { name: "A/B Testing", category: "Research" },
+    { name: "Go-to-Market", category: "Product" },
+    { name: "Stakeholder Management", category: "Leadership" },
+    { name: "OKRs", category: "Product" },
+    { name: "Python", category: "Technical" },
+    { name: "Amplitude", category: "Technical" },
   ],
 
   languages: [
@@ -110,5 +119,5 @@ const data: PortfolioData = {
 }
 
 export default function Page() {
-  return <TemplateTheAtlas data={data} />
+  return <TemplateTheAtlas portfolioData={data} />
 }

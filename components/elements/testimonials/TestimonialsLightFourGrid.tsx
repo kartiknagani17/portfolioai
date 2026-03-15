@@ -39,7 +39,7 @@ export default function TestimonialsLightFourGrid({
             <div className="border-t border-[#E8E4DE] mt-4 pt-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[var(--color-border)]" />
               <div>
-                <p className="font-semibold" style={{ color: "var(--color-text)" }}>{t.author}</p>
+                <p className="font-semibold" style={{ color: "var(--color-text)" }}>{t.name}</p>
                 <p className="text-sm" style={{ color: "var(--color-textMuted)" }}>{t.role}</p>
               </div>
             </div>

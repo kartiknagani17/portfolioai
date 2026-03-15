@@ -1781,7 +1781,7 @@ export default function TemplateCanvas({ portfolioData }: { portfolioData: Portf
       )}
 
       {/* ── 08: CERTIFICATIONS ── */}
-      {certifications?.length > 0 && (
+      {(certifications?.length ?? 0) > 0 && (
         <section id="cv-certifications">
           <div className="cv-cert-section">
             <div className="cv-divider">
@@ -1790,7 +1790,7 @@ export default function TemplateCanvas({ portfolioData }: { portfolioData: Portf
               <span className="cv-divider-num">08</span>
             </div>
             <div className="cv-cert-list">
-              {certifications.map((c, i) => (
+              {certifications?.map((c, i) => (
                 <div
                   key={i}
                   className={`cv-cert-row${secVis("cv-certifications") ? " vis" : ""}`}
@@ -1809,7 +1809,7 @@ export default function TemplateCanvas({ portfolioData }: { portfolioData: Portf
       )}
 
       {/* ── 09: LANGUAGES & INTERESTS ── */}
-      {(languages?.length > 0 || interests?.length > 0) && (
+      {((languages?.length ?? 0) > 0 || (interests?.length ?? 0) > 0) && (
         <section id="cv-extras">
           <div className="cv-extras-section">
             <div className="cv-divider">
@@ -1818,11 +1818,11 @@ export default function TemplateCanvas({ portfolioData }: { portfolioData: Portf
               <span className="cv-divider-num">09</span>
             </div>
             <div className="cv-extras-grid">
-              {languages?.length > 0 && (
+              {(languages?.length ?? 0) > 0 && (
                 <div id="cv-lang-section">
                   <div className="cv-extras-heading">Languages</div>
                   <div className="cv-lang-list">
-                    {languages.map((l, i) => (
+                    {languages?.map((l, i) => (
                       <div key={i} className="cv-lang-row">
                         <div className="cv-lang-name">{l.language}</div>
                         <div className="cv-lang-bar-wrap">
@@ -1842,11 +1842,11 @@ export default function TemplateCanvas({ portfolioData }: { portfolioData: Portf
                   </div>
                 </div>
               )}
-              {interests?.length > 0 && (
+              {(interests?.length ?? 0) > 0 && (
                 <div>
                   <div className="cv-extras-heading">Interests</div>
                   <div className="cv-int-cloud">
-                    {interests.map((t, i) => (
+                    {interests?.map((t, i) => (
                       <div
                         key={i}
                         className={`cv-int-tag${secVis("cv-extras") ? " vis" : ""}`}

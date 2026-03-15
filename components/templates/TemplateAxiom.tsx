@@ -811,7 +811,7 @@ function interestName(i: any): string {
 }
 
 /* ── component ─────────────────────────────────────────────────── */
-interface Props { data: PortfolioData; accentColor?: string }
+interface Props { portfolioData: PortfolioData; accentColor?: string }
 
 export default function TemplateAxiom({ portfolioData: data }: Props) {
   const [navScrolled, setNavScrolled] = useState(false)
@@ -830,7 +830,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
   /* roles for typewriter */
   const roles = [
     (data.personal?.professionalTitle ?? (data as any).currentRole),
-    ...(data.experience ?? []).slice(0, 3).map(e => e.title ?? e.role ?? e.position ?? '')
+    ...(data.experience ?? []).slice(0, 3).map((e: any) => e.title ?? e.role ?? e.position ?? '')
   ].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i) as string[]
 
   /* stats */
@@ -842,7 +842,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
   })()
   const topSkills = (data.skills ?? []).slice(0, 5).map(skillName).filter(Boolean)
   const curCo     = (data.experience?.[0] as any)?.company ?? (data.experience?.[0] as any)?.organization ?? ''
-  const skillList = (data.skills ?? []).map(s => ({ name: skillName(s), pct: skillPct(s) })).filter(s => s.name)
+  const skillList = (data.skills ?? []).map((s: any) => ({ name: skillName(s), pct: skillPct(s) })).filter((s: any) => s.name)
   const wsPrinciples = parseWorkStyle(data.workStyle ?? '')
   const lfChips      = parseLookingFor(data.lookingFor ?? '')
 
@@ -968,19 +968,19 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
             <span className="ax-cursor"/>
           </div>
           <div className="ax-hero-meta">
-            {data.location && <span>{data.location}</span>}
-            {data.location && <span className="ax-meta-sep"/>}
-            {data.openToWork !== false && <span className="ax-avail">Available</span>}
+            {(data.personal?.location ?? (data as any).location) && <span>{data.personal?.location ?? (data as any).location}</span>}
+            {(data.personal?.location ?? (data as any).location) && <span className="ax-meta-sep"/>}
+            {(data as any).openToWork !== false && <span className="ax-avail">Available</span>}
           </div>
           <p className="ax-hero-bio">{data.personal?.bio ?? (data as any).bio ?? (data as any).summary ?? ''}</p>
           <div className="ax-hero-cta">
-            {data.email && (
-              <a className="ax-btn-p" href={`mailto:${data.email}`}>
+            {(data.personal?.email ?? (data as any).email) && (
+              <a className="ax-btn-p" href={`mailto:${data.personal?.email ?? (data as any).email}`}>
                 <span>✉ Get in touch</span>
               </a>
             )}
-            {data.linkedin && <a className="ax-btn-s" href={data.linkedin} target="_blank" rel="noopener noreferrer">↗ LinkedIn</a>}
-            {data.github   && <a className="ax-btn-s" href={data.github}   target="_blank" rel="noopener noreferrer">↗ GitHub</a>}
+            {(data.personal?.linkedinUrl ?? (data as any).linkedin) && <a className="ax-btn-s" href={data.personal?.linkedinUrl ?? (data as any).linkedin} target="_blank" rel="noopener noreferrer">↗ LinkedIn</a>}
+            {(data.personal?.githubUrl ?? (data as any).github) && <a className="ax-btn-s" href={data.personal?.githubUrl ?? (data as any).github} target="_blank" rel="noopener noreferrer">↗ GitHub</a>}
           </div>
         </div>
 
@@ -988,7 +988,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
         <div className="ax-bento" ref={bentoRef}>
           <div className="ax-bc ax-bc-wide ax-bc-vio">
             <div className="ax-bc-lbl">Currently</div>
-            <div className="ax-bc-val-sm">{(data.personal?.professionalTitle ?? (data as any).currentRole || '')}{curCo ? ` @ ${curCo}` : ''}</div>
+            <div className="ax-bc-val-sm">{(data.personal?.professionalTitle ?? ((data as any).currentRole || ''))}{curCo ? ` @ ${curCo}` : ''}</div>
           </div>
           <div className="ax-bc">
             <div className="ax-bc-lbl">Experience</div>
@@ -1002,7 +1002,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
           <div className="ax-bc ax-bc-wide">
             <div className="ax-bc-lbl">Top skills</div>
             <div className="ax-bc-pills">
-              {topSkills.map(s => <span key={s} className="ax-bc-pill">{s}</span>)}
+              {topSkills.map((s: any) => <span key={s} className="ax-bc-pill">{s}</span>)}
             </div>
           </div>
         </div>
@@ -1012,7 +1012,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
       {data.tagline && (
         <section className="ax-tagline">
           <p className="ax-tg-text">
-            {data.tagline.split(' ').map((w, i) => (
+            {data.tagline.split(' ').map((w: any, i: any) => (
               <span key={i} className="ax-tg-w" style={{ transitionDelay: `${i * 55}ms` }}>
                 {w}{' '}
               </span>
@@ -1028,7 +1028,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
           <div className="ax-sec-h ax-rv ax-d1">How I got <em className="ax-em">here</em></div>
           <div className="ax-story-grid">
             <div className="ax-story-body">
-              {data.careerStory.split(/\.\s+/).filter(s => s.length > 12).map((s, i) => (
+              {data.careerStory.split(/\.\s+/).filter((s: any) => s.length > 12).map((s: any, i: any) => (
                 <p key={i} style={{ transitionDelay: `${i * 110}ms` }}>
                   {/[.!?]$/.test(s) ? s : s + '.'}
                 </p>
@@ -1036,7 +1036,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
             </div>
             <div className="ax-story-aside ax-rv">
               <div className="ax-aside-q">"{(data as any).tagline || data.personal?.professionalTitle || (data as any).currentRole}"</div>
-              <div className="ax-aside-n">— {data.name}</div>
+              <div className="ax-aside-n">— {data.personal?.fullName ?? (data as any).name}</div>
             </div>
           </div>
         </section>
@@ -1048,7 +1048,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
           <div className="ax-sec-lbl ax-rv">Experience</div>
           <div className="ax-sec-h ax-rv ax-d1">Where I've <em className="ax-em">worked</em></div>
           <div className="ax-exp-list">
-            {(data.experience ?? []).map((exp: any, i) => (
+            {(data.experience ?? []).map((exp: any, i: any) => (
               <div key={i}>
                 <div className={`ax-exp-item${activeExp === i ? ' open' : ''} ax-rv`} style={{ transitionDelay: `${i * 80}ms` }}>
                   <div className="ax-exp-hd" onClick={() => setActiveExp(activeExp === i ? -1 : i)}>
@@ -1088,7 +1088,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
           <div className="ax-sec-lbl ax-rv">Projects</div>
           <div className="ax-sec-h ax-rv ax-d1">Things I've <em className="ax-em">built</em></div>
           <div className="ax-proj-grid">
-            {(data.projects ?? []).map((proj: any, i) => (
+            {(data.projects ?? []).map((proj: any, i: any) => (
               <div key={i} className={`ax-pc ax-rv-sc`} style={{ transitionDelay: `${i * 90}ms` }}>
                 <div className="ax-pc-overlay"/>
                 <div className="ax-pc-num">0{i+1}</div>
@@ -1134,7 +1134,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
           <div className="ax-sec-lbl ax-rv">Skills</div>
           <div className="ax-sec-h ax-rv ax-d1">What I <em className="ax-em">know</em></div>
           <div className="ax-sk-grid">
-            {skillList.map((s, i) => (
+            {skillList.map((s: any, i: any) => (
               <div key={i} className="ax-sk-row ax-rv" style={{ transitionDelay: `${i * 55}ms` }}>
                 <div className="ax-sk-top">
                   <span className="ax-sk-nm">{s.name}</span>
@@ -1155,7 +1155,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
           <div className="ax-sec-lbl ax-rv">Languages</div>
           <div className="ax-sec-h ax-rv ax-d1"><em className="ax-em">Spoken</em> languages</div>
           <div className="ax-lang-grid">
-            {(data.languages ?? []).map((l: any, i) => {
+            {(data.languages ?? []).map((l: any, i: any) => {
               const nm = langName(l), lv = langLevel(l), dots = profDots(lv)
               return (
                 <div key={i} className="ax-lang-card ax-rv" style={{ transitionDelay: `${i * 80}ms` }}>
@@ -1177,7 +1177,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
           <div className="ax-sec-lbl ax-rv" style={{ justifyContent:'center' }}>Interests</div>
           <div className="ax-sec-h ax-rv ax-d1" style={{ textAlign:'center' }}>Beyond <em className="ax-em">work</em></div>
           <div className="ax-int-cloud">
-            {(data.interests ?? []).map((int: any, i) => (
+            {(data.interests ?? []).map((int: any, i: any) => (
               <span key={i} className="ax-int-tag" style={{ transitionDelay: `${i * 60}ms` }}>
                 {interestName(int)}
               </span>
@@ -1192,7 +1192,7 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
           <div className="ax-sec-lbl ax-rv">Education</div>
           <div className="ax-sec-h ax-rv ax-d1">Where I <em className="ax-em">studied</em></div>
           <div className="ax-edu-grid">
-            {(data.education ?? []).map((edu: any, i) => (
+            {(data.education ?? []).map((edu: any, i: any) => (
               <div key={i} className="ax-edu-card ax-rv-sc" style={{ transitionDelay: `${i * 100}ms` }}>
                 <div className="ax-edu-deg">{edu.degree ?? edu.title ?? ''}</div>
                 <div className="ax-edu-sch">{edu.institution ?? edu.school ?? edu.university ?? ''}</div>
@@ -1226,18 +1226,18 @@ export default function TemplateAxiom({ portfolioData: data }: Props) {
         <div className="ax-ct-glow"/>
         <div className="ax-ct-eye ax-rv">Let's work together</div>
         <h2 className="ax-ct-head ax-rv ax-d1">Say <em>hello</em>.</h2>
-        {data.email && (
-          <a href={`mailto:${data.email}`} className="ax-ct-email ax-rv ax-d2">{data.email}</a>
+        {(data.personal?.email ?? (data as any).email) && (
+          <a href={`mailto:${data.personal?.email ?? (data as any).email}`} className="ax-ct-email ax-rv ax-d2">{data.personal?.email ?? (data as any).email}</a>
         )}
         <div className="ax-ct-links ax-rv ax-d3">
-          {data.linkedin && <a href={data.linkedin} className="ax-ct-lnk" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>}
-          {data.github   && <a href={data.github}   className="ax-ct-lnk" target="_blank" rel="noopener noreferrer">GitHub ↗</a>}
-          {data.website  && <a href={data.website}  className="ax-ct-lnk" target="_blank" rel="noopener noreferrer">Website ↗</a>}
+          {(data.personal?.linkedinUrl ?? (data as any).linkedin) && <a href={data.personal?.linkedinUrl ?? (data as any).linkedin} className="ax-ct-lnk" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>}
+          {(data.personal?.githubUrl ?? (data as any).github) && <a href={data.personal?.githubUrl ?? (data as any).github} className="ax-ct-lnk" target="_blank" rel="noopener noreferrer">GitHub ↗</a>}
+          {(data.personal?.websiteUrl ?? (data as any).website) && <a href={data.personal?.websiteUrl ?? (data as any).website} className="ax-ct-lnk" target="_blank" rel="noopener noreferrer">Website ↗</a>}
         </div>
       </section>
 
       <footer className="ax-footer">
-        <div className="ax-ft">{data.name} · Portfolio {new Date().getFullYear()}</div>
+        <div className="ax-ft">{data.personal?.fullName ?? (data as any).name} · Portfolio {new Date().getFullYear()}</div>
         <div className="ax-ft">Built with PortfolioAI</div>
       </footer>
     </div>

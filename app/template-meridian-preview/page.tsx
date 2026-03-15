@@ -21,6 +21,7 @@ const MOCK_DATA: PortfolioData = {
       companyName: "Stripe",
       roleTitle: "Senior Product Manager",
       startDate: "2021",
+      endDate: "",
       isCurrent: true,
       location: "San Francisco, CA",
       description:
@@ -31,6 +32,7 @@ const MOCK_DATA: PortfolioData = {
       roleTitle: "Product Manager II",
       startDate: "2018",
       endDate: "2021",
+      isCurrent: false,
       location: "Menlo Park, CA",
       description:
         "Owned the options trading product. Shipped 6 major feature releases, reduced onboarding drop-off by 34%, and collaborated daily with legal and compliance to navigate a heavily regulated space.",
@@ -40,6 +42,7 @@ const MOCK_DATA: PortfolioData = {
       roleTitle: "Associate Product Manager",
       startDate: "2015",
       endDate: "2018",
+      isCurrent: false,
       location: "Mountain View, CA",
       description:
         "Started on the QuickBooks mobile team. First role out of university — learned product craft the hard way: shipping, breaking things, and fixing them faster the next time.",
@@ -61,12 +64,14 @@ const MOCK_DATA: PortfolioData = {
         "No-code onboarding flow builder for SaaS products. Built as a side project, acquired 800 paying users in 4 months with zero marketing budget.",
       techStack: ["Next.js", "Supabase", "Stripe"],
       liveUrl: "https://example.com",
+      githubUrl: "",
     },
     {
       projectName: "Clarity PRD",
       description:
         "Open-source PRD template system with AI-assisted spec generation. 2,300 stars on GitHub. Used by PMs at Figma, Notion, and Linear.",
       techStack: ["Python", "Claude API", "Markdown"],
+      liveUrl: "",
       githubUrl: "https://github.com/jordanreeves/clarity-prd",
     },
   ],

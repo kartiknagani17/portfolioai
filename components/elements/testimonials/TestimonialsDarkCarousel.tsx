@@ -56,7 +56,7 @@ export default function TestimonialsDarkCarousel({
                 <div className="flex items-center gap-3 mt-6">
                   <div className="w-12 h-12 rounded-full bg-white/20" />
                   <div>
-                    <p className="font-semibold text-white">{t.author}</p>
+                    <p className="font-semibold text-white">{t.name}</p>
                     <p className="text-sm text-white/70">{t.role}</p>
                   </div>
                 </div>

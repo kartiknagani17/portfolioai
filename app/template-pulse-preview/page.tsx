@@ -153,5 +153,5 @@ const data: PortfolioData = {
 }
 
 export default function Page() {
-  return <TemplatePulse data={data} />
+  return <TemplatePulse portfolioData={data} />
 }

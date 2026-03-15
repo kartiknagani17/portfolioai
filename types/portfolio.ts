@@ -26,6 +26,7 @@ export interface PortfolioData {
     techStack: string[]
     liveUrl: string
     githubUrl: string
+    imageUrl?: string
   }[]
   skills: {
     name: string
@@ -49,6 +50,13 @@ export interface PortfolioData {
     proficiency: string
   }[]
   interests?: string[]
+  testimonials?: {
+    name: string
+    role: string
+    company: string
+    quote: string
+    avatarUrl?: string
+  }[]
 
   // ── AI-generated personality fields ──────────────────────────────────────
   // Gemini synthesizes these from the full resume. Always rendered — never conditional.
@@ -56,6 +64,11 @@ export interface PortfolioData {
   careerStory: string   // 2–4 sentence narrative arc: start → drive → now
   workStyle: string     // How they think and work, inferred from career patterns
   lookingFor: string    // What they want next, inferred from trajectory
+}
+
+export interface AssemblyConfig {
+  sectionsOrder?: string[]
+  content?: Record<string, string | undefined>
 }
 
 export interface LayoutConfig {
